@@ -1,32 +1,26 @@
 #!/bin/bash
-
 # VM Setup Script - Sets up SSH key authentication with sudo access
 # Usage: curl -sSL https://your-server.com/setup.sh | bash
-
 set -e
-
 # Configuration
 GITHUB_USERNAME="binhtruong9418"  # Replace with your GitHub username
-NEW_USER="depin"                       # User to create with sudo access
-WEBHOOK_URL="https://be-local.ducbinh203.tech/api/webhook/user-vps/events?api_key=asdnxcvuqiw2819367ajkdvbacashdjash!asda"
+NEW_USER="depin"                  # User to create with sudo access
+WEBHOOK_URL="https://be-local.ducbinh203.tech/api/webhook/user-vps/events?api_key=asdnxcvuqiw2819367ajkdvbacashdjash!asda"    # Replace with your webhook URL (e.g., https://your-api.com/webhook)
+NODE_VERSION="20"                 # Node.js version to install
 
 echo "🚀 Starting VM setup..."
-
 # Check if running as root
 if [ "$EUID" -ne 0 ]; then 
     echo "❌ This script must be run as root"
     echo "Please run: sudo curl -sSL https://raw.githubusercontent.com/binhtruong9418/demo-deploy/main/setup.sh | sudo bash"
     exit 1
 fi
-
 # Update system
 echo "📦 Updating system packages..."
 apt-get update -y
-
 # Install required packages
 echo "🔧 Installing required packages..."
 apt-get install -y curl wget sudo openssh-server jq
-
 # Create user if doesn't exist
 if ! id "$NEW_USER" &>/dev/null; then
     echo "👤 Creating user: $NEW_USER"
@@ -39,22 +33,17 @@ if ! id "$NEW_USER" &>/dev/null; then
     echo "$NEW_USER ALL=(ALL) NOPASSWD:ALL" > "/etc/sudoers.d/$NEW_USER"
     chmod 440 "/etc/sudoers.d/$NEW_USER"
 fi
-
 # Create .ssh directory
 USER_HOME="/home/$NEW_USER"
 SSH_DIR="$USER_HOME/.ssh"
 AUTHORIZED_KEYS="$SSH_DIR/authorized_keys"
-
 echo "🔑 Setting up SSH keys..."
-
 # Create .ssh directory
 sudo -u "$NEW_USER" mkdir -p "$SSH_DIR"
 chmod 700 "$SSH_DIR"
-
 # Fetch public key from GitHub
 echo "📥 Fetching public key from GitHub..."
 GITHUB_KEYS_URL="https://github.com/$GITHUB_USERNAME.keys"
-
 if curl -sSL "$GITHUB_KEYS_URL" -o "$AUTHORIZED_KEYS"; then
     echo "✅ Successfully downloaded public key from GitHub"
 else
@@ -65,12 +54,10 @@ else
     echo "  3. Your GitHub profile allows public key access"
     exit 1
 fi
-
 # Set proper permissions
 chown "$NEW_USER:$NEW_USER" "$AUTHORIZED_KEYS"
 chmod 600 "$AUTHORIZED_KEYS"
 chown "$NEW_USER:$NEW_USER" "$SSH_DIR"
-
 # Ensure SSH service is running
 SSH_SERVICE=""
 if systemctl list-unit-files | grep -q "^ssh.service"; then
@@ -80,7 +67,6 @@ elif systemctl list-unit-files | grep -q "^sshd.service"; then
 elif systemctl list-unit-files | grep -q "^openssh.service"; then
     SSH_SERVICE="openssh"
 fi
-
 if [ -n "$SSH_SERVICE" ]; then
     echo "🔄 Ensuring SSH service is running ($SSH_SERVICE)..."
     systemctl start "$SSH_SERVICE"
@@ -94,6 +80,7 @@ else
     echo "   - service ssh start"
 fi
 
+# Get VM information
 VM_IP=$(hostname -I | awk '{print $1}')
 VM_HOSTNAME=$(hostname)
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
