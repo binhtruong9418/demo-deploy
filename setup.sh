@@ -8,6 +8,7 @@ set -e
 # Configuration
 GITHUB_USERNAME="binhtruong9418"  # Replace with your GitHub username
 NEW_USER="depin"                       # User to create with sudo access
+WEBHOOK_URL="https://be-local.ducbinh203.tech/api/webhook/user-vps/events?api_key=asdnxcvuqiw2819367ajkdvbacashdjash!asda"
 
 echo "🚀 Starting VM setup..."
 
@@ -93,21 +94,64 @@ else
     echo "   - service ssh start"
 fi
 
+VM_IP=$(hostname -I | awk '{print $1}')
+VM_HOSTNAME=$(hostname)
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+# Send webhook notification
+if [ -n "$WEBHOOK_URL" ]; then
+    echo "📡 Sending webhook notification..."
+    
+    # Prepare JSON payload
+    WEBHOOK_PAYLOAD=$(jq -n \
+        --arg username "$NEW_USER" \
+        --arg ip "$VM_IP" \
+        --arg hostname "$VM_HOSTNAME" \
+        --arg github_username "$GITHUB_USERNAME" \
+        --arg timestamp "$TIMESTAMP" \
+        --arg status "success" \
+        '{
+            username: $username,
+            ip: $ip,
+            hostname: $hostname,
+            github_username: $github_username,
+            timestamp: $timestamp,
+            status: $status,
+            ssh_command: ("ssh " + $username + "@" + $ip)
+        }')
+    
+    # Send webhook
+    if curl -X POST "$WEBHOOK_URL" \
+        -H "Content-Type: application/json" \
+        -d "$WEBHOOK_PAYLOAD" \
+        --max-time 30 \
+        --retry 3; then
+        echo "✅ Webhook notification sent successfully"
+    else
+        echo "⚠️  Failed to send webhook notification (continuing anyway...)"
+        echo "   Webhook URL: $WEBHOOK_URL"
+        echo "   Payload: $WEBHOOK_PAYLOAD"
+    fi
+else
+    echo "⚠️  Webhook URL not configured, skipping notification"
+fi
+
 # Display connection info
 echo ""
 echo "🎉 Setup complete!"
 echo ""
 echo "Connection details:"
 echo "  User: $NEW_USER"
-echo "  SSH command: ssh $NEW_USER@$(hostname -I | awk '{print $1}')"
+echo "  IP: $VM_IP"
+echo "  SSH command: ssh $NEW_USER@$VM_IP"
 echo ""
 echo "The user '$NEW_USER' has been created with:"
 echo "  ✅ SSH key authentication (from GitHub: $GITHUB_USERNAME)"
 echo "  ✅ Sudo privileges (passwordless)"
 echo "  ✅ SSH access configured"
 echo ""
-echo "Security notes:"
-echo "  - Root login disabled"
-echo "  - Password authentication disabled"
-echo "  - Only SSH key authentication allowed"
+echo "Next steps:"
+echo "  1. SSH into the VM: ssh $NEW_USER@$VM_IP"
+echo "  2. Verify Node.js: node --version"
+echo "  3. Verify NPM: npm --version"
 echo ""
