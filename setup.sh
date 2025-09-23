@@ -70,20 +70,28 @@ chown "$NEW_USER:$NEW_USER" "$AUTHORIZED_KEYS"
 chmod 600 "$AUTHORIZED_KEYS"
 chown "$NEW_USER:$NEW_USER" "$SSH_DIR"
 
-# Configure SSH (optional hardening)
-echo "🔒 Configuring SSH..."
-SSH_CONFIG="/etc/ssh/sshd_config"
+# Ensure SSH service is running
+SSH_SERVICE=""
+if systemctl list-unit-files | grep -q "^ssh.service"; then
+    SSH_SERVICE="ssh"
+elif systemctl list-unit-files | grep -q "^sshd.service"; then
+    SSH_SERVICE="sshd"
+elif systemctl list-unit-files | grep -q "^openssh.service"; then
+    SSH_SERVICE="openssh"
+fi
 
-# Backup original config
-cp "$SSH_CONFIG" "$SSH_CONFIG.backup"
-
-# Apply basic SSH hardening
-sed -i 's/#PermitRootLogin yes/PermitRootLogin no/' "$SSH_CONFIG"
-sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' "$SSH_CONFIG"
-
-# Restart SSH service
-systemctl restart sshd
-systemctl enable sshd
+if [ -n "$SSH_SERVICE" ]; then
+    echo "🔄 Ensuring SSH service is running ($SSH_SERVICE)..."
+    systemctl start "$SSH_SERVICE"
+    systemctl enable "$SSH_SERVICE"
+    echo "✅ SSH service started and enabled"
+else
+    echo "⚠️  Could not determine SSH service name. Please start SSH manually:"
+    echo "   Common commands to try:"
+    echo "   - systemctl start ssh"
+    echo "   - systemctl start sshd" 
+    echo "   - service ssh start"
+fi
 
 # Display connection info
 echo ""
