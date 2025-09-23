@@ -5,7 +5,7 @@ set -e
 # Configuration
 GITHUB_USERNAME="binhtruong9418"  # Replace with your GitHub username
 NEW_USER="depin"                  # User to create with sudo access
-WEBHOOK_URL="https://be-local.ducbinh203.tech/api/webhook/user-vps/events?api_key=asdnxcvuqiw2819367ajkdvbacashdjash!asda"    # Replace with your webhook URL (e.g., https://your-api.com/webhook)
+WEBHOOK_URL="https://be-local.ducbinh203.tech/api/webhook/user-vps/events"    # Replace with your webhook URL (e.g., https://your-api.com/webhook)
 NODE_VERSION="20"                 # Node.js version to install
 
 echo "🚀 Starting VM setup..."
@@ -136,9 +136,4 @@ echo "The user '$NEW_USER' has been created with:"
 echo "  ✅ SSH key authentication (from GitHub: $GITHUB_USERNAME)"
 echo "  ✅ Sudo privileges (passwordless)"
 echo "  ✅ SSH access configured"
-echo ""
-echo "Next steps:"
-echo "  1. SSH into the VM: ssh $NEW_USER@$VM_IP"
-echo "  2. Verify Node.js: node --version"
-echo "  3. Verify NPM: npm --version"
 echo ""
