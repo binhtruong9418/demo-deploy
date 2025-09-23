@@ -25,7 +25,7 @@ apt-get update -y
 
 # Install required packages
 echo "🔧 Installing required packages..."
-apt-get install -y curl wget sudo openssh-server
+apt-get install -y curl wget sudo openssh-server jq
 
 # Create user if doesn't exist
 if ! id "$NEW_USER" &>/dev/null; then
