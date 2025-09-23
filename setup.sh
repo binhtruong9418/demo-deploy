@@ -7,7 +7,7 @@ set -e
 
 # Configuration
 GITHUB_USERNAME="binhtruong9418"  # Replace with your GitHub username
-NEW_USER="deploy"                       # User to create with sudo access
+NEW_USER="depin"                       # User to create with sudo access
 
 echo "🚀 Starting VM setup..."
 
