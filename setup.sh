@@ -6,7 +6,7 @@ set -e
 # Configuration with environment variables
 GITHUB_USERNAME="${GITHUB_USERNAME:-binhtruong9418}"  # Can be overridden with env var
 NEW_USER="${NEW_USER:-strato-user-2}"                  # Can be overridden with env var
-WEBHOOK_URL="${WEBHOOK_URL:-https://be-local.ducbinh203.tech/api/webhook/strato/validate-setup}"    # Can be overridden with env var
+WEBHOOK_URL="${WEBHOOK_URL:-https://ai-decenter-depin-be.vinhomes.co.uk/api/webhook/strato/validate-setup}"    # Can be overridden with env var
 
 # Logging function with timestamp
 log() {
