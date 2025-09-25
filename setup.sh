@@ -107,24 +107,29 @@ sed -i -E 's/^[[:space:]]*#?[[:space:]]*(AuthorizedKeysFile).*/\1 .ssh\/authoriz
 log "SSH daemon configuration updated"
 
 # Ensure SSH service is running
-SSH_SERVICE=""
-if systemctl list-unit-files | grep -q "^ssh.service"; then
-    SSH_SERVICE="ssh"
-elif systemctl list-unit-files | grep -q "^sshd.service"; then
-    SSH_SERVICE="sshd"
-elif systemctl list-unit-files | grep -q "^openssh.service"; then
-    SSH_SERVICE="openssh"
+SSH_SERVICE_NAME=$(systemctl list-units --type=service | grep -o 'sshd.service\|ssh.service\|openssh.service' | head -n 1)
+
+if [ -n "$SSH_SERVICE_NAME" ]; then
+    log "Restarting SSH service: $SSH_SERVICE_NAME"
+    systemctl restart "$SSH_SERVICE_NAME"
+    systemctl enable "$SSH_SERVICE_NAME"
+else
+    log "WARNING: Could not determine SSH service name. Please restart it manually."
 fi
 
-if [ -n "$SSH_SERVICE" ]; then
-    log "Starting SSH service: $SSH_SERVICE"
-    systemctl start "$SSH_SERVICE"
-    systemctl enable "$SSH_SERVICE"
-    log "SSH service started and enabled"
-else
-    log "WARNING: Could not determine SSH service name"
-    log "Please start SSH service manually using: systemctl start ssh"
-fi
+log "Configuring firewall (UFW)"
+
+# Allow SSH connections before enabling the firewall
+log "Allowing SSH traffic on port 22"
+ufw allow ssh
+
+# Enable the firewall automatically without a y/n prompt
+log "Enabling firewall"
+yes | ufw enable
+
+log "Firewall is now active. Current status:"
+# Log the status for verification
+ufw status
 
 # Get VM information
 VM_IP=$(hostname -I | awk '{print $1}')
