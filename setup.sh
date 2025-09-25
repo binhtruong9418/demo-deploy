@@ -130,15 +130,12 @@ if [ -n "$WEBHOOK_URL" ]; then
         --arg hostname "$VM_HOSTNAME" \
         --arg timestamp "$TIMESTAMP" \
         --arg status "success" \
-        --arg github_user "$GITHUB_USERNAME" \
         '{
             username: $username,
             ip: $ip,
             hostname: $hostname,
             timestamp: $timestamp,
             status: $status,
-            github_username: $github_user,
-            ssh_command: ("ssh " + $username + "@" + $ip)
         }')
     
     # Send webhook
