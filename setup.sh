@@ -22,7 +22,7 @@ log "New User: $NEW_USER"
 # Check if running as root
 if [ "$EUID" -ne 0 ]; then 
     log "ERROR: This script must be run as root"
-    log "Please run: export NEW_USER=your-username && sudo curl -sSL https://raw.githubusercontent.com/binhtruong9418/demo-deploy/main/setup.sh | sudo bash"
+    log "Please run: export NEW_USER=your-username && sudo curl -sSL https://raw.githubusercontent.com/binhtruong9418/demo-deploy/main/setup.sh | sudo -E bash"
     exit 1
 fi
 
