@@ -157,6 +157,4 @@ fi
 log "Setup completed successfully"
 log "User: $NEW_USER"
 log "IP: $VM_IP"
-log "SSH command: ssh $NEW_USER@$VM_IP"
 log "SSH key authentication configured from GitHub: $GITHUB_USERNAME"
-log "User has sudo privileges without password"
