@@ -68,7 +68,7 @@ USER_HOME="/home/$NEW_USER"
 SSH_DIR="$USER_HOME/.ssh"
 AUTHORIZED_KEYS="$SSH_DIR/authorized_keys"
 
-log "Setting up SSH keys"
+log "Setting up SSH keys for ${NEW_USER}"
 
 # Create .ssh directory
 sudo -u "$NEW_USER" mkdir -p "$SSH_DIR"
@@ -93,6 +93,18 @@ chown "$NEW_USER:$NEW_USER" "$AUTHORIZED_KEYS"
 chmod 600 "$AUTHORIZED_KEYS"
 chown "$NEW_USER:$NEW_USER" "$SSH_DIR"
 log "SSH key permissions set correctly"
+
+# Config SSH Config file
+log "Ensuring SSH daemon configuration is correct"
+SSHD_CONFIG_FILE="/etc/ssh/sshd_config"
+
+# Create a backup of the original config file
+cp "$SSHD_CONFIG_FILE" "$SSHD_CONFIG_FILE.bak"
+
+sed -i -E 's/^[[:space:]]*#?[[:space:]]*(PubkeyAuthentication).*/\1 yes/' "$SSHD_CONFIG_FILE"
+sed -i -E 's/^[[:space:]]*#?[[:space:]]*(AuthorizedKeysFile).*/\1 .ssh\/authorized_keys/' "$SSHD_CONFIG_FILE"
+
+log "SSH daemon configuration updated"
 
 # Ensure SSH service is running
 SSH_SERVICE=""
