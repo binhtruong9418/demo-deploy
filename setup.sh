@@ -94,17 +94,17 @@ chmod 600 "$AUTHORIZED_KEYS"
 chown "$NEW_USER:$NEW_USER" "$SSH_DIR"
 log "SSH key permissions set correctly"
 
-# Config SSH Config file
-log "Ensuring SSH daemon configuration is correct"
-SSHD_CONFIG_FILE="/etc/ssh/sshd_config"
+# # Config SSH Config file
+# log "Ensuring SSH daemon configuration is correct"
+# SSHD_CONFIG_FILE="/etc/ssh/sshd_config"
 
-# Create a backup of the original config file
-cp "$SSHD_CONFIG_FILE" "$SSHD_CONFIG_FILE.bak"
+# # Create a backup of the original config file
+# cp "$SSHD_CONFIG_FILE" "$SSHD_CONFIG_FILE.bak"
 
-sed -i -E 's/^[[:space:]]*#?[[:space:]]*(PubkeyAuthentication).*/\1 yes/' "$SSHD_CONFIG_FILE"
-sed -i -E 's/^[[:space:]]*#?[[:space:]]*(AuthorizedKeysFile).*/\1 .ssh\/authorized_keys/' "$SSHD_CONFIG_FILE"
+# sed -i -E 's/^[[:space:]]*#?[[:space:]]*(PubkeyAuthentication).*/\1 yes/' "$SSHD_CONFIG_FILE"
+# sed -i -E 's/^[[:space:]]*#?[[:space:]]*(AuthorizedKeysFile).*/\1 .ssh\/authorized_keys/' "$SSHD_CONFIG_FILE"
 
-log "SSH daemon configuration updated"
+# log "SSH daemon configuration updated"
 
 # Ensure SSH service is running
 SSH_SERVICE_NAME=$(systemctl list-units --type=service | grep -o 'sshd.service\|ssh.service\|openssh.service' | head -n 1)
@@ -117,22 +117,22 @@ else
     log "WARNING: Could not determine SSH service name. Please restart it manually."
 fi
 
-log "Configuring firewall (UFW)"
+# log "Configuring firewall (UFW)"
 
-# Allow SSH connections before enabling the firewall
-log "Allowing SSH traffic on port 22"
-ufw allow ssh
+# # Allow SSH connections before enabling the firewall
+# log "Allowing SSH traffic on port 22"
+# ufw allow ssh
 
-# Enable the firewall automatically without a y/n prompt
-log "Enabling firewall"
-yes | ufw enable
+# # Enable the firewall automatically without a y/n prompt
+# log "Enabling firewall"
+# yes | ufw enable
 
-log "Firewall is now active. Current status:"
-# Log the status for verification
-ufw status
+# log "Firewall is now active. Current status:"
+# # Log the status for verification
+# ufw status
 
 # Get VM information
-VM_IP=$(hostname -I | awk '{print $1}')
+VM_IP=$(curl -4 -s --max-time 5 icanhazip.com)
 VM_HOSTNAME=$(hostname)
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
