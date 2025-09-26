@@ -1,13 +1,15 @@
 #!/bin/bash
 # Strato Node Setup Script - One-command node installation
+# Usage: curl -sSL https://raw.githubusercontent.com/binhtruong9418/demo-deploy/main/strato-node.sh | bash -s -- [client_id] [client_password]
 set -e
 
+# Default configuration
 DEFAULT_DOWNLOAD_URL="https://github.com/binhtruong9418/merkle-node/releases/latest/download/agent-node-ubuntu-20.04"
 
-# Parse arguments or use environment variables
-DOWNLOAD_URL="${1:-${DOWNLOAD_URL:-$DEFAULT_DOWNLOAD_URL}}"
-CLIENT_ID="${2:-${CLIENT_ID}}"
-CLIENT_PASSWORD="${3:-${CLIENT_PASSWORD}}"
+# Parse arguments or use environment variables with defaults
+DOWNLOAD_URL="${DOWNLOAD_URL:-$DEFAULT_DOWNLOAD_URL}"
+CLIENT_ID="${1:-${CLIENT_ID}}"
+CLIENT_PASSWORD="${2:-${CLIENT_PASSWORD}}"
 
 # Enhanced logging
 log() {
@@ -20,8 +22,8 @@ error() {
 }
 
 # Validate required parameters
-[[ -n "$CLIENT_ID" ]] || error "Client ID is required. Usage: bash script.sh [download_url] [client_id] [client_password]"
-[[ -n "$CLIENT_PASSWORD" ]] || error "Client password is required. Usage: bash script.sh [download_url] [client_id] [client_password]"
+[[ -n "$CLIENT_ID" ]] || error "Client ID is required. Usage: bash script.sh [client_id] [client_password]"
+[[ -n "$CLIENT_PASSWORD" ]] || error "Client password is required. Usage: bash script.sh [client_id] [client_password]"
 
 log "Installing Strato Node (ID: $CLIENT_ID)"
 
