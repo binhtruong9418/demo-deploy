@@ -7,9 +7,9 @@ set -e
 DEFAULT_DOWNLOAD_URL="https://github.com/binhtruong9418/merkle-node/releases/latest/download/agent-node-ubuntu-20.04"
 
 # Parse arguments or use environment variables with defaults
-DOWNLOAD_URL="${DOWNLOAD_URL:-$DEFAULT_DOWNLOAD_URL}"
 CLIENT_ID="${1:-${CLIENT_ID}}"
 CLIENT_PASSWORD="${2:-${CLIENT_PASSWORD}}"
+DOWNLOAD_URL="${3:-${DOWNLOAD_URL:-$DEFAULT_DOWNLOAD_URL}}"
 
 # Enhanced logging
 log() {
