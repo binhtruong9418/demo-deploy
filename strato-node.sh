@@ -25,7 +25,16 @@ error() {
 [[ -n "$CLIENT_ID" ]] || error "Client ID is required. Usage: bash script.sh [client_id] [client_password]"
 [[ -n "$CLIENT_PASSWORD" ]] || error "Client password is required. Usage: bash script.sh [client_id] [client_password]"
 
-log "Installing Strato Node (ID: $CLIENT_ID)"
+PUBLIC_IP=$(curl -4 -s --max-time 5 icanhazip.com 2>/dev/null || echo "")
+
+# Create client ID with IP if available, otherwise use original CLIENT_ID
+if [[ -n "$PUBLIC_IP" ]]; then
+    CLIENT_WITH_IP="${CLIENT_ID}_${PUBLIC_IP}"
+else
+    CLIENT_WITH_IP="$CLIENT_ID"
+fi
+
+log "Installing Strato Node (ID: $CLIENT_WITH_IP)"
 
 # Create setup directory
 SETUP_DIR="/opt/strato-node"
@@ -54,7 +63,7 @@ enabled = true
 mqtt_broker = "emqx.decenter.ai"
 mqtt_port = 1883
 topic_prefix = "strato_kv"
-client_id = "$CLIENT_ID"
+client_id = "$CLIENT_WITH_IP"
 client_password = "$CLIENT_PASSWORD"
 EOF
 
