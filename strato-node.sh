@@ -30,19 +30,19 @@ log "Installing Strato Node (ID: $CLIENT_ID)"
 # Create setup directory
 SETUP_DIR="/opt/strato-node"
 log "Creating setup directory: $SETUP_DIR"
-mkdir -p "$SETUP_DIR"
+sudo mkdir -p "$SETUP_DIR"
 
 # Download node binary
 log "Downloading strato-agent from: $DOWNLOAD_URL"
 cd "$SETUP_DIR" || exit
-if ! curl -fsSL -o strato-agent "$DOWNLOAD_URL"; then
+if ! sudo curl -fsSL -o strato-agent "$DOWNLOAD_URL"; then
     error "Failed to download strato-agent from: $DOWNLOAD_URL"
 fi
-chmod +x strato-agent
+sudo chmod +x strato-agent
 
 # Create config file
 log "Creating configuration file"
-cat > config.toml <<EOF
+sudo tee config.toml > /dev/null <<EOF
 host = "127.0.0.1"
 port = 8379
 storage_path = "strato_data"
