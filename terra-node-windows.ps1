@@ -12,7 +12,7 @@ param(
     [string]$ClientPassword = $env:CLIENT_PASSWORD,
     
     [Parameter(Mandatory=$false)]
-    [string]$DownloadUrl = "https://github.com/binhtruong9418/merkle-node/releases/latest/download/agent-node-windows"
+    [string]$DownloadUrl = "https://github.com/binhtruong9418/merkle-node/releases/latest/download/agent-node-windows.exe"
 )
 
 # Require Administrator privileges
@@ -64,7 +64,7 @@ if (-not (Test-Path $SetupDir)) {
 
 # Download node binary
 $AgentPath = Join-Path $SetupDir "terra-agent.exe"
-Write-Log "Downloading strato-agent from: $DownloadUrl"
+Write-Log "Downloading terra-agent from: $DownloadUrl"
 
 try {
     Invoke-WebRequest -Uri $DownloadUrl -OutFile $AgentPath -UseBasicParsing
