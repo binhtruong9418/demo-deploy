@@ -12,7 +12,7 @@ param(
     [string]$ClientPassword = $env:CLIENT_PASSWORD,
     
     [Parameter(Mandatory=$false)]
-    [string]$DownloadUrl = "https://github.com/binhtruong9418/merkle-node/releases/latest/download/agent-node-windows.exe"
+    [string]$DownloadUrl = "https://github.com/binhtruong9418/merkle-node/releases/latest/download/agent-node-windows"
 )
 
 # Require Administrator privileges
