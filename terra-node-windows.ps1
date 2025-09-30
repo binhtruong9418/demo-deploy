@@ -1,8 +1,8 @@
 # Strato Node Setup Script for Windows
 # Usage: 
-#   PowerShell -ExecutionPolicy Bypass -File terra-node-windows.ps1 -ClientId "your_id" -ClientPassword "your_password"
+#   PowerShell -ExecutionPolicy Bypass -File strato-node-windows.ps1 -ClientId "your_id" -ClientPassword "your_password"
 # Or one-liner:
-#   iwr -useb https://raw.githubusercontent.com/binhtruong9418/demo-deploy/main/terra-node-windows.ps1 | iex
+#   iwr -useb https://raw.githubusercontent.com/binhtruong9418/demo-deploy/main/strato-node-windows.ps1 | iex
 
 param(
     [Parameter(Mandatory=$false)]
@@ -33,13 +33,24 @@ function Write-ErrorLog {
     exit 1
 }
 
-# Validate required parameters
+# Validate required parameters - prompt if missing
 if ([string]::IsNullOrWhiteSpace($ClientId)) {
-    Write-ErrorLog "Client ID is required. Usage: .\terra-node-windows.ps1 -ClientId 'your_id' -ClientPassword 'your_password'"
+    Write-Host "Client ID not provided." -ForegroundColor Yellow
+    $ClientId = Read-Host "Please enter your Client ID"
+    if ([string]::IsNullOrWhiteSpace($ClientId)) {
+        Write-ErrorLog "Client ID is required. Usage: .\terra-node-windows.ps1 -ClientId 'your_id' -ClientPassword 'your_password'"
+    }
 }
 
 if ([string]::IsNullOrWhiteSpace($ClientPassword)) {
-    Write-ErrorLog "Client password is required. Usage: .\terra-node-windows.ps1 -ClientId 'your_id' -ClientPassword 'your_password'"
+    Write-Host "Client Password not provided." -ForegroundColor Yellow
+    $SecurePassword = Read-Host "Please enter your Client Password" -AsSecureString
+    $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecurePassword)
+    $ClientPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+    [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($BSTR)
+    if ([string]::IsNullOrWhiteSpace($ClientPassword)) {
+        Write-ErrorLog "Client password is required. Usage: .\terra-node-windows.ps1 -ClientId 'your_id' -ClientPassword 'your_password'"
+    }
 }
 
 # Get public IP
@@ -63,14 +74,34 @@ if (-not (Test-Path $SetupDir)) {
 }
 
 # Download node binary
-$AgentPath = Join-Path $SetupDir "terra-agent.exe"
+$AgentPath = Join-Path $SetupDir "strato-agent.exe"
 Write-Log "Downloading terra-agent from: $DownloadUrl"
 
+# Configure TLS and security protocols
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls13
+
 try {
-    Invoke-WebRequest -Uri $DownloadUrl -OutFile $AgentPath -UseBasicParsing
+    # Try with different methods
+    Write-Log "Attempting download method 1 (Invoke-WebRequest)..."
+    $ProgressPreference = 'SilentlyContinue'  # Speed up download
+    Invoke-WebRequest -Uri $DownloadUrl -OutFile $AgentPath -UseBasicParsing -TimeoutSec 300
     Write-Log "Download completed successfully"
 } catch {
-    Write-ErrorLog "Failed to download terra-agent from: $DownloadUrl. Error: $_"
+    Write-Log "Method 1 failed, trying method 2 (WebClient)..."
+    try {
+        $WebClient = New-Object System.Net.WebClient
+        $WebClient.DownloadFile($DownloadUrl, $AgentPath)
+        Write-Log "Download completed successfully using WebClient"
+    } catch {
+        Write-Log "Method 2 failed, trying method 3 (BITS)..."
+        try {
+            Import-Module BitsTransfer
+            Start-BitsTransfer -Source $DownloadUrl -Destination $AgentPath
+            Write-Log "Download completed successfully using BITS"
+        } catch {
+            Write-ErrorLog "All download methods failed. URL: $DownloadUrl. Last Error: $_. Please check: 1) File exists at URL 2) Internet connection 3) Firewall/Proxy settings"
+        }
+    }
 }
 
 # Create config file
@@ -112,20 +143,68 @@ if ($ExistingService) {
     Start-Sleep -Seconds 2
 }
 
-# Create service using New-Service
-Write-Log "Creating new service..."
-$ServiceParams = @{
-    Name = $ServiceName
-    BinaryPathName = "`"$AgentPath`" --config `"$ConfigPath`""
-    DisplayName = "Terra Node Service"
-    Description = "Terra distributed key-value store node"
-    StartupType = "Automatic"
+# Download and setup NSSM (Non-Sucking Service Manager) for better service management
+Write-Log "Downloading NSSM (Service Manager)..."
+$NssmZip = Join-Path $env:TEMP "nssm.zip"
+$NssmDir = Join-Path $SetupDir "nssm"
+
+try {
+    Invoke-WebRequest -Uri "https://nssm.cc/release/nssm-2.24.zip" -OutFile $NssmZip -UseBasicParsing
+    Expand-Archive -Path $NssmZip -DestinationPath $env:TEMP -Force
+    
+    # Copy appropriate NSSM version (64-bit or 32-bit)
+    if ([Environment]::Is64BitOperatingSystem) {
+        $NssmExe = Join-Path $SetupDir "nssm.exe"
+        Copy-Item "$env:TEMP\nssm-2.24\win64\nssm.exe" -Destination $NssmExe -Force
+    } else {
+        $NssmExe = Join-Path $SetupDir "nssm.exe"
+        Copy-Item "$env:TEMP\nssm-2.24\win32\nssm.exe" -Destination $NssmExe -Force
+    }
+    
+    Write-Log "NSSM installed successfully"
+} catch {
+    Write-Log "NSSM download failed, using built-in service creation"
+    $NssmExe = $null
 }
 
-New-Service @ServiceParams | Out-Null
+# Create service
+Write-Log "Creating Windows service..."
+
+if ($NssmExe -and (Test-Path $NssmExe)) {
+    # Use NSSM for better service management
+    Write-Log "Using NSSM for service creation..."
+    
+    & $NssmExe install $ServiceName "$AgentPath" --config "$ConfigPath" 2>&1 | Out-Null
+    & $NssmExe set $ServiceName DisplayName "Terra Node Service" 2>&1 | Out-Null
+    & $NssmExe set $ServiceName Description "Terra distributed key-value store node running in background" 2>&1 | Out-Null
+    & $NssmExe set $ServiceName Start SERVICE_AUTO_START 2>&1 | Out-Null
+    & $NssmExe set $ServiceName AppDirectory "$SetupDir" 2>&1 | Out-Null
+    & $NssmExe set $ServiceName AppStdout "$SetupDir\service.log" 2>&1 | Out-Null
+    & $NssmExe set $ServiceName AppStderr "$SetupDir\service-error.log" 2>&1 | Out-Null
+    & $NssmExe set $ServiceName AppRotateFiles 1 2>&1 | Out-Null
+    & $NssmExe set $ServiceName AppRotateBytes 1048576 2>&1 | Out-Null
+    
+    Write-Log "Service created with NSSM"
+} else {
+    # Fallback to built-in service creation
+    Write-Log "Using built-in service creation..."
+    
+    $ServiceParams = @{
+        Name = $ServiceName
+        BinaryPathName = "`"$AgentPath`" --config `"$ConfigPath`""
+        DisplayName = "Terra Node Service"
+        Description = "Terra distributed key-value store node running in background"
+        StartupType = "Automatic"
+    }
+    
+    New-Service @ServiceParams | Out-Null
+}
 
 # Configure service recovery options
 sc.exe failure $ServiceName reset= 86400 actions= restart/5000/restart/5000/restart/5000 | Out-Null
+
+# Set service to run in background (no console window)
+sc.exe config $ServiceName type= own | Out-Null
 
 # Start the service
 Write-Log "Starting Terra Node service..."
@@ -166,13 +245,17 @@ Write-Host "  Client ID: $ClientId" -ForegroundColor White
 Write-Host "  Client ID with IP: $ClientWithIP" -ForegroundColor White
 Write-Host "  Setup Directory: $SetupDir" -ForegroundColor White
 Write-Host "  Service Status: $ServiceStatus" -ForegroundColor White
+Write-Host "  Service Type: Background (No Console Window)" -ForegroundColor White
 Write-Host ""
 Write-Host "Service Management Commands:" -ForegroundColor Cyan
 Write-Host "  Check status: Get-Service -Name TerraNode" -ForegroundColor Yellow
-Write-Host "  View logs: Get-EventLog -LogName Application -Source TerraNode -Newest 50" -ForegroundColor Yellow
 Write-Host "  Stop service: Stop-Service -Name TerraNode" -ForegroundColor Yellow
 Write-Host "  Start service: Start-Service -Name TerraNode" -ForegroundColor Yellow
 Write-Host "  Restart service: Restart-Service -Name TerraNode" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "Log Files:" -ForegroundColor Cyan
+Write-Host "  Standard output: $SetupDir\service.log" -ForegroundColor Yellow
+Write-Host "  Error output: $SetupDir\service-error.log" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "Configuration file: $ConfigPath" -ForegroundColor Cyan
 Write-Host "Executable: $AgentPath" -ForegroundColor Cyan
