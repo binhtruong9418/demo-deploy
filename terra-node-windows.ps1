@@ -17,19 +17,38 @@ param(
 
 # Require Administrator privileges
 if (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-    Write-Error "This script requires Administrator privileges. Please run as Administrator."
+    Write-Host ""
+    Write-Host "========================================" -ForegroundColor Red
+    Write-Host "  ADMINISTRATOR PRIVILEGES REQUIRED" -ForegroundColor Red
+    Write-Host "========================================" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Please run PowerShell as Administrator:" -ForegroundColor Yellow
+    Write-Host "  1. Right-click PowerShell" -ForegroundColor Cyan
+    Write-Host "  2. Select 'Run as Administrator'" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Then run the command again." -ForegroundColor Yellow
+    Write-Host ""
+    Start-Sleep -Seconds 3
     exit 1
 }
+
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "   TERRA NODE INSTALLER" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
 
 # Enhanced logging functions
 function Write-Log {
     param([string]$Message)
     Write-Host "[$(Get-Date -Format 'HH:mm:ss')] $Message" -ForegroundColor Green
+    [Console]::Out.Flush()
 }
 
 function Write-ErrorLog {
     param([string]$Message)
     Write-Host "[ERROR] $Message" -ForegroundColor Red
+    [Console]::Out.Flush()
     exit 1
 }
 
@@ -57,10 +76,8 @@ if ([string]::IsNullOrWhiteSpace($ClientPassword)) {
 try {
     $PublicIP = (Invoke-WebRequest -Uri "https://icanhazip.com" -UseBasicParsing -TimeoutSec 5).Content.Trim()
     $ClientWithIP = "${ClientId}_${PublicIP}"
-    Write-Log "Detected public IP: $PublicIP"
 } catch {
     $ClientWithIP = $ClientId
-    Write-Log "Could not detect public IP, using original Client ID"
 }
 
 Write-Log "Installing Terra Node (ID: $ClientWithIP)"
@@ -75,7 +92,7 @@ if (-not (Test-Path $SetupDir)) {
 
 # Download node binary
 $AgentPath = Join-Path $SetupDir "terra-agent.exe"
-Write-Log "Downloading terra-agent from: $DownloadUrl"
+Write-Log "Downloading terra-agent ...."
 
 # Configure TLS and security protocols
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls13
@@ -106,7 +123,6 @@ try {
 
 # Create config file
 $ConfigPath = Join-Path $SetupDir "config.toml"
-Write-Log "Creating configuration file: $ConfigPath"
 
 $ConfigContent = @"
 host = "127.0.0.1"
@@ -242,8 +258,7 @@ try {
 Write-Log "Installation completed!"
 Write-Host ""
 Write-Host "Terra Node Details:" -ForegroundColor Cyan
-Write-Host "  Client ID: $ClientId" -ForegroundColor White
-Write-Host "  Client ID with IP: $ClientWithIP" -ForegroundColor White
+Write-Host "  Client ID: $ClientWithIP" -ForegroundColor White
 Write-Host "  Setup Directory: $SetupDir" -ForegroundColor White
 Write-Host "  Service Status: $ServiceStatus" -ForegroundColor White
 Write-Host "  Service Type: Background (No Console Window)" -ForegroundColor White
