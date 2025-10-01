@@ -29,7 +29,6 @@ if (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
     Write-Host "Then run the command again." -ForegroundColor Yellow
     Write-Host ""
     Start-Sleep -Seconds 3
-    exit 1
 }
 
 Write-Host ""
@@ -275,3 +274,5 @@ Write-Host "  Error output: $SetupDir\service-error.log" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "Configuration file: $ConfigPath" -ForegroundColor Cyan
 Write-Host "Executable: $AgentPath" -ForegroundColor Cyan
+Write-Host ""
+[Console]::Out.Flush()
