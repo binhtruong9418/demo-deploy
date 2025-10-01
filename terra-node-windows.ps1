@@ -63,7 +63,7 @@ try {
     Write-Log "Could not detect public IP, using original Client ID"
 }
 
-Write-Log "Installing Strato Node (ID: $ClientWithIP)"
+Write-Log "Installing Terra Node (ID: $ClientWithIP)"
 
 # Create setup directory
 $SetupDir = "C:\Program Files\TerraNode"
@@ -173,14 +173,15 @@ Write-Log "Creating Windows service..."
 if ($NssmExe -and (Test-Path $NssmExe)) {
     # Use NSSM for better service management
     Write-Log "Using NSSM for service creation..."
+
     
-    & $NssmExe install $ServiceName "$AgentPath" --config "$ConfigPath" 2>&1 | Out-Null
+    & $NssmExe install $ServiceName "`"$AgentPath`"" --config "`"$ConfigPath`"" 2>&1 | Out-Null
     & $NssmExe set $ServiceName DisplayName "Terra Node Service" 2>&1 | Out-Null
     & $NssmExe set $ServiceName Description "Terra distributed key-value store node running in background" 2>&1 | Out-Null
     & $NssmExe set $ServiceName Start SERVICE_AUTO_START 2>&1 | Out-Null
-    & $NssmExe set $ServiceName AppDirectory "$SetupDir" 2>&1 | Out-Null
-    & $NssmExe set $ServiceName AppStdout "$SetupDir\service.log" 2>&1 | Out-Null
-    & $NssmExe set $ServiceName AppStderr "$SetupDir\service-error.log" 2>&1 | Out-Null
+    & $NssmExe set $ServiceName AppDirectory "`"$SetupDir`"" 2>&1 | Out-Null
+    & $NssmExe set $ServiceName AppStdout "`"$SetupDir\service.log`"" 2>&1 | Out-Null
+    & $NssmExe set $ServiceName AppStderr "`"$SetupDir\service-error.log`"" 2>&1 | Out-Null
     & $NssmExe set $ServiceName AppRotateFiles 1 2>&1 | Out-Null
     & $NssmExe set $ServiceName AppRotateBytes 1048576 2>&1 | Out-Null
     
