@@ -32,7 +32,7 @@ echo [INFO] Client ID: %CLIENT_ID%
 echo.
 
 REM Download the main installer
-powershell -ExecutionPolicy Bypass -Command "try { Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/binhtruong9418/demo-deploy/main/terra-node-windows.bat' -OutFile 'terra-install.bat' -UseBasicParsing; Write-Host '[OK] Installer downloaded' -ForegroundColor Green } catch { Write-Host '[ERROR] Download failed:' $_.Exception.Message -ForegroundColor Red; exit 1 }"
+powershell -ExecutionPolicy Bypass -Command "try { Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/binhtruong9418/demo-deploy/main/terra-node-windows.exe' -OutFile 'install.exe' -UseBasicParsing; Write-Host '[OK] Installer downloaded' -ForegroundColor Green } catch { Write-Host '[ERROR] Download failed:' $_.Exception.Message -ForegroundColor Red; exit 1 }"
 
 if %errorLevel% neq 0 (
     echo [ERROR] Failed to download installer!
