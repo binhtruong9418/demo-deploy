@@ -66,7 +66,7 @@ try {
 Write-Log "Installing Terra Node (ID: $ClientWithIP)"
 
 # Create setup directory
-$SetupDir = "C:\Program Files\TerraNode"
+$SetupDir = "C:\ProgramData\TerraNode"
 Write-Log "Creating setup directory: $SetupDir"
 
 if (-not (Test-Path $SetupDir)) {
