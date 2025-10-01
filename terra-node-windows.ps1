@@ -74,7 +74,7 @@ if (-not (Test-Path $SetupDir)) {
 }
 
 # Download node binary
-$AgentPath = Join-Path $SetupDir "strato-agent.exe"
+$AgentPath = Join-Path $SetupDir "terra-agent.exe"
 Write-Log "Downloading terra-agent from: $DownloadUrl"
 
 # Configure TLS and security protocols
